@@ -69,10 +69,14 @@ async def on_shutdown(app):
     await asyncio.gather(*coros)
     pcs.clear()
 
+app = Starlette(debug=True, routes=[
+    Route('/', index),
+    Route("/client.js", javascript),
+    Route("/offer", offer, methods=['GET', 'POST']),
+], on_shutdown=[on_shutdown])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WebRTC webcam demo")
-    parser.add_argument("--play-from", help="Read the media from a file and sent it."),
     parser.add_argument(
         "--host", default="127.0.0.1", help="Host for HTTP server (default: 127.0.0.1)"
     )
@@ -85,10 +89,5 @@ if __name__ == "__main__":
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    app = Starlette(debug=True, routes=[
-        Route('/', index),
-        Route("/client.js", javascript),
-        Route("/offer", offer, methods=['GET', 'POST']),
-    ], on_shutdown=[on_shutdown])
     import uvicorn
     uvicorn.run(app, host=args.host, port=args.port)
