@@ -1,28 +1,53 @@
 import argparse
 import asyncio
-import json
 import logging
 logging.basicConfig(level='DEBUG')
 import os
-import platform
-import ssl
-import math
 
-import numpy
-import cv2
+import numpy as np
 
-# from aiohttp import web
 from starlette.responses import HTMLResponse, JSONResponse, Response
 from starlette.applications import Starlette
 from starlette.routing import Route
 
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
 from av import VideoFrame
-from aiortc.contrib.media import MediaPlayer
 
 ROOT = os.path.dirname(__file__)
 
-from webcam import FlagVideoStreamTrack
+class DemoVideoStreamTrack(VideoStreamTrack):
+    """
+    A video track that returns a demo.
+    """
+
+    def __init__(self):
+        super().__init__()  # don't forget this!
+        self.counter = 0
+        height, width = 480, 640
+
+        # generate flag
+        self.nframes = 60
+        data_bgr = np.zeros((height, width, 3), dtype=np.uint8)
+        yy, xx = np.indices(data_bgr.shape[:2])
+        xx = 2 * np.pi * xx / width
+
+        self.frames = []
+        for i in range(self.nframes):
+            phase = (i / self.nframes) * 2 * np.pi
+            data_bgr[:,:,0] = 255 * (np.cos(xx + phase) / 2)
+            data_bgr[:,:,1] = 255 * (np.cos(xx + phase) / 2)
+            data_bgr[:,:,2] = 255 * (np.cos(xx + phase) / 2)
+            self.frames.append(VideoFrame.from_ndarray(data_bgr, format="bgr24"))
+
+    async def recv(self):
+        pts, time_base = await self.next_timestamp()
+
+        frame = self.frames[self.counter % self.nframes]
+        frame.pts = pts
+        frame.time_base = time_base
+        self.counter += 1
+        return frame
+
 
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
@@ -53,7 +78,7 @@ async def offer(request):
 
     for t in pc.getTransceivers():
         if t.kind == "video":
-            pc.addTrack(FlagVideoStreamTrack())
+            pc.addTrack(DemoVideoStreamTrack())
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
 
