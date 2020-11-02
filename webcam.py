@@ -95,7 +95,6 @@ async def offer(request):
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
     pc = RTCPeerConnection()
-    pcs.add(pc)
 
     @pc.on("iceconnectionstatechange")
     async def on_iceconnectionstatechange():
@@ -104,23 +103,7 @@ async def offer(request):
             await pc.close()
             pcs.discard(pc)
 
-    # open media source
-    # if args.play_from:
-    #     player = MediaPlayer(args.play_from)
-    # else:
-    #     options = {"framerate": "30", "video_size": "640x480"}
-    #     if platform.system() == "Darwin":
-    #         player = MediaPlayer("default:none", format="avfoundation", options=options)
-    #     else:
-    #         player = MediaPlayer("/dev/video0", format="v4l2", options=options)
-    #     pass
-
     await pc.setRemoteDescription(offer)
-    # for t in pc.getTransceivers():
-    #     if t.kind == "audio" and player.audio:
-    #         pc.addTrack(player.audio)
-    #     elif t.kind == "video" and player.video:
-    #         pc.addTrack(player.video)
         
     for t in pc.getTransceivers():
         if t.kind == "video":
@@ -150,7 +133,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WebRTC webcam demo")
     parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
     parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
-    parser.add_argument("--play-from", help="Read the media from a file and sent it."),
     parser.add_argument(
         "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
     )

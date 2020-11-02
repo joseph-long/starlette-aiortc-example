@@ -40,6 +40,7 @@ async def offer(request):
 
     pc = RTCPeerConnection()
     pcs.add(pc)
+    print(pcs)
 
     @pc.on("iceconnectionstatechange")
     async def on_iceconnectionstatechange():
@@ -48,24 +49,8 @@ async def offer(request):
             await pc.close()
             pcs.discard(pc)
 
-    # open media source
-    # if args.play_from:
-    #     player = MediaPlayer(args.play_from)
-    # else:
-    #     options = {"framerate": "30", "video_size": "640x480"}
-    #     if platform.system() == "Darwin":
-    #         player = MediaPlayer("default:none", format="avfoundation", options=options)
-    #     else:
-    #         player = MediaPlayer("/dev/video0", format="v4l2", options=options)
-    #     pass
-
     await pc.setRemoteDescription(offer)
-    # for t in pc.getTransceivers():
-    #     if t.kind == "audio" and player.audio:
-    #         pc.addTrack(player.audio)
-    #     elif t.kind == "video" and player.video:
-    #         pc.addTrack(player.video)
-        
+
     for t in pc.getTransceivers():
         if t.kind == "video":
             pc.addTrack(FlagVideoStreamTrack())

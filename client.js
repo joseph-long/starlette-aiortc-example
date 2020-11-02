@@ -1,9 +1,14 @@
+var iceConnectionLog = document.getElementById('ice-connection-state'),
+    iceGatheringLog = document.getElementById('ice-gathering-state'),
+    signalingLog = document.getElementById('signaling-state');
+
 var pc = null;
 
 function negotiate() {
     pc.addTransceiver('video', {direction: 'recvonly'});
     pc.addTransceiver('audio', {direction: 'recvonly'});
     return pc.createOffer().then(function(offer) {
+        document.getElementById('offer-sdp').textContent = offer.sdp;
         return pc.setLocalDescription(offer);
     }).then(function() {
         // wait for ICE gathering to complete
@@ -35,6 +40,7 @@ function negotiate() {
     }).then(function(response) {
         return response.json();
     }).then(function(answer) {
+        document.getElementById('answer-sdp').textContent = answer.sdp;
         return pc.setRemoteDescription(answer);
     }).catch(function(e) {
         alert(e);
@@ -51,6 +57,22 @@ function start() {
     }
 
     pc = new RTCPeerConnection(config);
+
+    // register some listeners to help debugging
+    pc.addEventListener('icegatheringstatechange', function() {
+        iceGatheringLog.textContent += ' -> ' + pc.iceGatheringState;
+    }, false);
+    iceGatheringLog.textContent = pc.iceGatheringState;
+
+    pc.addEventListener('iceconnectionstatechange', function() {
+        iceConnectionLog.textContent += ' -> ' + pc.iceConnectionState;
+    }, false);
+    iceConnectionLog.textContent = pc.iceConnectionState;
+
+    pc.addEventListener('signalingstatechange', function() {
+        signalingLog.textContent += ' -> ' + pc.signalingState;
+    }, false);
+    signalingLog.textContent = pc.signalingState;
 
     // connect audio / video
     pc.addEventListener('track', function(evt) {
